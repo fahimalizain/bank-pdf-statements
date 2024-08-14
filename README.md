@@ -10,7 +10,17 @@ This API allows users to upload bank PDF statements and converts them into CSV/J
 
 ## How it works
 
-1. Text extraction: The PDF is parsed using a library like [pdf-parse](https://github.com/modesty/pdf-parse) to extract the text from the PDF.
+- Text extraction: The PDF is parsed using a library like [pdf2json](https://www.npmjs.com/package/pdf2json) to extract the text from the PDF.
+- Date Range Extraction: The extracted text is then parsed to extract the date range.
+- Statement Extraction: The extracted text is then parsed to extract the transactions. We are expecting the following columns:
+  - Date
+  - Value Date
+  - Cheque Number / Ref No / Tran. No
+  - Description / Memo / Note / Details / Narration
+  - Credit / Deposit
+  - Debit / Withdrawal
+  - Balance
+- The extracted transactions are then converted into a CSV or JSON format as per the user's preference.
 
 ## Table of Contents
 
@@ -149,6 +159,7 @@ The API expects a fixed API key to be sent in the `Authorization` header. You ca
 - **Description:** Upload a PDF file to create a parsing job.
 - **Request Body:** 
     - Multipart form-data with the key `file` containing the PDF.
+    - Optional `outputFormat` parameter to specify the output format (csv or json) default is csv.
 - **Response:**
     ```json
     {
