@@ -1,5 +1,9 @@
 # Bank PDF Statement Parser API
 
+> [!WARNING]  
+> PDF Parsing is best done with Computer Vision / Machine Learning powered approaches (eg. [camelot](https://github.com/atlanhq/camelot))  
+> This project is meant to be a simple string parsing with the help of PDF2JSON library.
+
 This API allows users to upload bank PDF statements and converts them into CSV/JSON format. The requests are handled asynchronously using a queuing system to ensure scalability and reliability even under heavy load.
 
 ## Features
@@ -11,16 +15,16 @@ This API allows users to upload bank PDF statements and converts them into CSV/J
 ## How it works
 
 - Text extraction: The PDF is parsed using a library like [pdf2json](https://www.npmjs.com/package/pdf2json) to extract the text from the PDF.
-- Date Range Extraction: The extracted text is then parsed to extract the date range.
-- Statement Extraction: The extracted text is then parsed to extract the transactions. We are expecting the following columns:
+- Column Extraction: The extracted text is then parsed to extract the transactions. We are expecting the following columns:
   - Date
   - Value Date
   - Cheque Number / Ref No / Tran. No
   - Description / Memo / Note / Details / Narration
   - Credit / Deposit
   - Debit / Withdrawal
-  - Balance
-- The extracted transactions are then converted into a CSV or JSON format as per the user's preference.
+  - Balance  
+  We identify the line number of the text where the column headers are present.
+- Row Extraction: Text elements coming under the column headers are grouped together and parsed to extract the transactions with the help of their X-Y coordinates.
 
 ## Table of Contents
 
@@ -261,7 +265,7 @@ The API expects a fixed API key to be sent in the `Authorization` header. You ca
 </details>
 
 <details>
-<summary>Get job details</summary>
+<summary>Delete job</summary>
 
 - **Endpoint:** `DELETE /api/v1/statements/{jobId}`
 - **Description:** Delete a job.
