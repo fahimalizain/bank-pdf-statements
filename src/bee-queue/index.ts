@@ -1,7 +1,8 @@
 import Queue from 'bee-queue';
 import { getJobLogger, logger } from '../logger';
-import { EnqueueJobArgs, PDFJob } from '../types';
+import { EnqueueJobArgs, JobProgress, PDFJob } from '../types';
 import { extractTable } from '../pdf/extract_table';
+import { ExtractTableResult } from '../pdf/types';
 
 export const defaultQueue = new Queue<PDFJob>('PDF_QUEUE', {
   redis: {
@@ -33,6 +34,51 @@ export function enqueueJob(args: EnqueueJobArgs) {
     .save();
 }
 
+export async function getJob(jobId: string) {
+  const job = await defaultQueue.getJob(jobId);
+  return formatJob(job);
+}
+
+export async function getJobResult(jobId: string): Promise<ExtractTableResult> {
+  const job = await defaultQueue.getJob(jobId);
+  return job.progress.result;
+}
+
+export async function getAllJobs() {
+  return Promise.all(
+    ['succeeded', 'failed', 'active', 'delayed', 'waiting'].map((status) =>
+      defaultQueue.getJobs(status, {
+        size: 1000,
+      }),
+    ),
+  )
+    .then((r) => r.flat())
+    .then((jobs) => jobs.map(formatJob));
+}
+
+export async function deleteJob(jobId: string) {
+  await defaultQueue.removeJob(jobId);
+}
+
+function formatJob(job: Queue.Job<PDFJob>) {
+  if (!job) {
+    return null;
+  }
+
+  const progress = job.progress || {};
+
+  return {
+    jobId: job.id,
+    status: job.status,
+    data: job.data,
+    progress: {
+      status: progress.status || 'queued',
+      progress: progress.progress || 0,
+      error: progress.error || undefined,
+    },
+  };
+}
+
 export function startWorker() {
   defaultQueue.process(async (job) => {
     const logger = getJobLogger({ jobId: job.id });
@@ -40,9 +86,18 @@ export function startWorker() {
     try {
       const r = await extractTable(job.data.inputFile, logger);
       logger.info({ message: 'Job completed', job: job.data, result: r });
+      job.reportProgress({
+        status: 'completed',
+        progress: 100,
+        result: r,
+      } satisfies JobProgress);
     } catch (e) {
       logger.error({ message: 'Job failed', job: job.data, error: e });
-      job.reportProgress({ status: 'error', progress: -1, error: e });
+      job.reportProgress({
+        status: 'error',
+        progress: -1,
+        error: e instanceof Error ? e : new Error(JSON.stringify(e)),
+      } satisfies JobProgress);
     }
   });
 }

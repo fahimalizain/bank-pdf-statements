@@ -2,16 +2,16 @@
   "name": "bank-pdf-statements",
   "version": "1.0.0",
   "description": "Parse Bank PDF Statements",
-  "main": "dist/index.js",
+  "main": "dist/app.js",
   "type": "commonjs",
   "engines": {
     "node": "^22.0.0"
   },
   "scripts": {
     "build": "tsc",
-    "start": "NODE_ENV=production node dist/index.js",
+    "start": "NODE_ENV=production node dist/app.js",
     "worker": "NODE_ENV=production node dist/worker.js",
-    "dev": "NODE_ENV=development ts-node-dev --respawn src/index.ts",
+    "dev": "NODE_ENV=development ts-node-dev --respawn src/app.ts",
     "parse-cli": "NODE_ENV=development ts-node src/cli.ts"
   },
   "keywords": [],
